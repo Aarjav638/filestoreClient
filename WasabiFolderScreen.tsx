@@ -24,7 +24,7 @@ const WasabiFolderScreen = () => {
   const [contents, setContents] = useState<Content[]>([]);
   const [newFolderName, setNewFolderName] = useState('');
   const [loading, setLoading] = useState(false);
-  const [awsConfig, setAwsConfig] = useState<configuration | null>(null);
+  const [wasabiConfig, setWasabiConfig] = useState<configuration | null>(null);
 
   const allowedExtensions = [
     '.3g2', '.3gp', '.7z', '.aac', '.asf', '.avi', '.bmp', '.doc', '.docx',
@@ -41,13 +41,13 @@ const WasabiFolderScreen = () => {
         setLoading(true);
         const config = await getConfig('wasabi');
         if (config) {
-          setAwsConfig(config);
+          setWasabiConfig(config);
         } else {
-          Alert.alert('Error', 'AWS configuration not found.');
+          Alert.alert('Error', 'Wasabi configuration not found.');
         }
       } catch (error) {
-        console.error('Error fetching AWS configuration:', error);
-        Alert.alert('Error', 'Failed to load AWS configuration.');
+        console.error('Error fetching Wasabi configuration:', error);
+        Alert.alert('Error', 'Failed to load Wasabi configuration.');
       } finally {
         setLoading(false);
       }
@@ -56,25 +56,25 @@ const WasabiFolderScreen = () => {
   }, []);
 
   useEffect(() => {
-    if (awsConfig) {
+    if (wasabiConfig) {
       fetchContents();
     }
-  }, [currentPath, awsConfig]);
+  }, [currentPath, wasabiConfig]);
 
 
-  console.log(awsConfig)
+  console.log(wasabiConfig)
 
   const fetchContents = async () => {
-    if (!awsConfig) return;
+    if (!wasabiConfig) return;
 
     setLoading(true);
     try {
-      const response = await axios.post('https://filestoreserver.onrender.com/aws/fetch-content', {
+      const response = await axios.post('https://filestoreserver.onrender.com/wasabi/fetch-content', {
         currentPath,
-        accessKeyId: awsConfig.accessKey,
-        secretAccessKey: awsConfig.secretKey,
-        region: awsConfig.region,
-        bucketName: awsConfig.bucketName,
+        accessKeyId: wasabiConfig.accessKey,
+        secretAccessKey: wasabiConfig.secretKey,
+        region: wasabiConfig.region,
+        bucketName: wasabiConfig.bucketName,
       });
       setContents([...response.data.folders, ...response.data.files]);
     } catch (error) {
@@ -90,17 +90,17 @@ const WasabiFolderScreen = () => {
       Alert.alert('Error', 'Folder name cannot be empty.');
       return;
     }
-    if (!awsConfig) return;
+    if (!wasabiConfig) return;
 
     setLoading(true);
     try {
       await axios.post('https://filestoreserver.onrender.com/aws/create-folder', {
         folderName: newFolderName,
         currentPath,
-        accessKeyId: awsConfig.accessKey,
-        secretAccessKey: awsConfig.secretKey,
-        region: awsConfig.region,
-        bucketName: awsConfig.bucketName,
+        accessKeyId: wasabiConfig.accessKey,
+        secretAccessKey: wasabiConfig.secretKey,
+        region: wasabiConfig.region,
+        bucketName: wasabiConfig.bucketName,
       });
       setNewFolderName('');
       fetchContents();
@@ -115,13 +115,13 @@ const WasabiFolderScreen = () => {
   const uploadFile = async () => {
     
     const formData = new FormData();
-    if (!awsConfig) return;
+    if (!wasabiConfig) return;
 
     try {
-        formData.append('accessKeyId', awsConfig.accessKey);
-        formData.append('secretAccessKey', awsConfig.secretKey);
-        formData.append('region', awsConfig.region);
-        formData.append('bucketName', awsConfig.bucketName);
+        formData.append('accessKeyId', wasabiConfig.accessKey);
+        formData.append('secretAccessKey', wasabiConfig.secretKey);
+        formData.append('region', wasabiConfig.region);
+        formData.append('bucketName', wasabiConfig.bucketName);
         formData.append('currentPath', currentPath);
       const files = await DocumentPicker.pick({
         allowMultiSelection: true,

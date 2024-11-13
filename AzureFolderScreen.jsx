@@ -13,7 +13,7 @@ import {
 import { BlobServiceClient } from '@azure/storage-blob';
 import * as DocumentPicker from 'react-native-document-picker';
 import { getConfig } from './utils/configrations';
-
+import RNFS from 'react-native-fs';
 const AzureFolderScreen = () => {
   const [containers, setContainers] = useState([]);
   const [fileList, setFileList] = useState([]);
@@ -169,10 +169,18 @@ const AzureFolderScreen = () => {
       );
       const promises = [];
       for (const file of files) {
+        const filePath= file.uri
+        console.log('File path:', filePath);
+        const data = await RNFS.readFile(filePath, 'base64');
+        console.log('Data:', data);
         const blockBlobClient = containerClient.getBlockBlobClient(
           `${currentPath}${file.name}`
         );
-        promises.push(blockBlobClient.uploadBrowserData(file));
+        promises.push(blockBlobClient.uploadData(data,{
+          blobHTTPHeaders:{
+            blobContentType:file.type||'application/octet-stream'
+          }
+        }));
       }
       await Promise.all(promises);
       listFiles(currentPath);
