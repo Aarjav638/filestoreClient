@@ -14,6 +14,7 @@ import { BlobServiceClient } from '@azure/storage-blob';
 import * as DocumentPicker from 'react-native-document-picker';
 import { getConfig } from './utils/configrations';
 import RNFS from 'react-native-fs';
+import { Buffer } from 'buffer';
 const AzureFolderScreen = () => {
   const [containers, setContainers] = useState([]);
   const [fileList, setFileList] = useState([]);
@@ -27,7 +28,6 @@ const AzureFolderScreen = () => {
     const init = async () => {
       try {
         const config = await getConfig('azure');
-        console.log('Azure config:', config);
         setBlobSasUrl(config);
       } catch (error) {
         console.error('Error fetching Azure config:', error.message);
@@ -69,12 +69,10 @@ const AzureFolderScreen = () => {
   };
 
   const listFiles = async (path) => {
-    console.log('Listing files:', path);
     if (!currentContainer) return;
 
     setLoading(true);
     
-    console.log('Current container:', currentContainer);
     try {
       const containerClient = blobServiceClient.getContainerClient(
         currentContainer
@@ -105,7 +103,6 @@ const AzureFolderScreen = () => {
       setLoading(false);
     }
   };
-  console.log('fileList:',fileList)
 
   const createFolder = async () => {
     if (!newFolderName.trim()) {
@@ -170,13 +167,12 @@ const AzureFolderScreen = () => {
       const promises = [];
       for (const file of files) {
         const filePath= file.uri
-        console.log('File path:', filePath);
         const data = await RNFS.readFile(filePath, 'base64');
-        console.log('Data:', data);
+        const buffer = Buffer.from(data, 'base64');
         const blockBlobClient = containerClient.getBlockBlobClient(
           `${currentPath}${file.name}`
         );
-        promises.push(blockBlobClient.uploadData(data,{
+        promises.push(blockBlobClient.upload(buffer,buffer.byteLength,{
           blobHTTPHeaders:{
             blobContentType:file.type||'application/octet-stream'
           }
@@ -206,7 +202,6 @@ const AzureFolderScreen = () => {
   };
 
   const selectContainer = (container) => {
-    console.log('Selected container:', container);
     setCurrentContainer(container);
     setCurrentPath('');
     setFileList([]);
@@ -220,7 +215,6 @@ const AzureFolderScreen = () => {
       </View>
     );
   }
-  console.log(',,,',fileList)
 
   return (
     <View style={styles.container}>
